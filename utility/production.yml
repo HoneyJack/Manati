@@ -40,6 +40,8 @@ services:
     restart: always
     container_name: 'postgres'
     image: 'postgres:9.6.5'
+    ports:
+    - 5432:5432
     env_file:
       - '.env-docker'
     volumes:
@@ -55,7 +57,7 @@ services:
 
   rqworker:
     build:
-      context: ..
+      context: '.'
       dockerfile: './compose/production/django/Dockerfile'
     image: 127.0.0.1:5000/manati_app
     env_file:

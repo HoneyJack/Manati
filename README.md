@@ -260,6 +260,90 @@ docker-compose up # or 'docker-compose up -d' if you don't want to see the logs 
 ```
 
 After this, just open your browser in [http://localhost:8000/manati_project/manati_ui/new](http://localhost:8000/manati_project/manati_ui/new)
+
+## Docker Swarm deployment
+Check if docker swarm is enabled and the ports 5432, 8080, 443 are free.
+```bash
+cd Manati
+cp .env.example .env
+cp .env-docker.example .env-docker
+```
+In the file `.env-docker`
+Find the line `REDISTOGO_URL_DOCKER=redis://redis/0` 
+replace  by `REDISTOGO_URL_DOCKER=redis://redis:6379`
+
+In the file `.env`, replace the following parameters:
+
+`REDIS_URL=redis://127.0.0.1:6379` by `REDIS_URL=redis://redis:6379`
+
+`DJANGO_SETTINGS_MODULE=config.settings.local` by `DJANGO_SETTINGS_MODULE=config.settings.production`
+
+`POSTGRES_HOST=localhost` by `POSTGRES_HOST=postgres`
+
+`DATABASE_URL=postgres://manati_db_user:password@localhost:5432/manati_db` by `DATABASE_URL=postgres://manati_db_user:password@postgres:5432/manati_db`
+
+and add the line:
+
+`DATABASE_TEST_URL=postgres://manati_db_user:password@postgres:5432/manati_db_test`
+
+Then copy the docker-compose file for docker swarm
+
+```bash
+cp utility/production.yml .
+docker stack deploy --compose-file production.yml manati
+```
+Then connect to `web` service using `bash` and execute:
+```bash
+python manage.py makemigrations --noinput; python manage.py migrate; python manage.py check_external_modules
+python manage.py createsuperuser2 --username admin --password Password123 --noinput --email 'admin@manatiproject.com'
+
+```
+After this, just open your browser in [http://localhost:8080/manati_project/manati_ui/new](http://localhost:8080/manati_project/manati_ui/new)
+
+### Use "Let's Encrypt HTTPS certificate" with Docker Swarm
+Go to Manati project folder
+```bash
+cd Manati
+```
+Stop Manati swarm service, volumes are not removed
+```bash
+docker stack rm manati
+```
+then create folder for certificates and create certificates
+replace [DOMAIN_NAME] with the bought domain name  Ex: `manati_app.yourorganization.com`
+```bash
+mkdir -p ./tmp/var/lib/letsencrypt
+mkdir -p ./tmp/etc/letsencrypt
+docker run --rm  -p 443:443 -p 80:80 --name letsencrypt -v "`pwd`/tmp/etc/letsencrypt:/etc/letsencrypt" -v "`pwd`/tmp/var/lib/letsencrypt:/var/lib/letsencrypt" certbot/certbot certonly -n -m "[YOUR_EMAIL]" -d [DOMAIN_NAME] --standalone --agree-tos
+```
+
+Upgrade ``web.conf`` of `nginx`
+
+```bash
+cp ./compose/local/nginx/https_web.conf.example ./compose/local/nginx/conf.d/web.conf
+vim ./compose/local/nginx/conf.d/web.conf
+```
+
+Update the parameter: ``server_name [DOMAIN_NAME]`` and the path ``/etc/letsencrypt/live/[DOMAIN_NAME]/`` 
+for the parameters: ``ssl_certificate`` and ``ssl_certificate_key``
+
+Then add a volume folder to `nginx` service:
+in the file `production.yml` after the line 14: 
+
+`- ./utility/run/:/run/  # <-- bind the media volume`
+
+add 
+
+`- ./tmp/etc/letsencrypt:/etc/letsencrypt`
+
+and deploy again ManaTI
+
+```bash
+docker stack deploy --compose-file production.yml manati
+```
+
+After this, just open your browser in [https://[DOMAIN_NAME]/manati_project/manati_ui/new](https://[DOMAIN_NAME]/manati_project/manati_ui/new)
+
 ## Backup DB
     pg_dump -U manati_db_user -W -F p manati_db > backup.sql # plain text
 
