@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 {% block title %}
     <div class="row">
-        <div class="col-md-10">
+        <div class="col-md-9">
                 Analysis Session - {{ analysissession.name }}
     <a id="sync-db-btn" href="#" class="btn btn-success"><i class="fa fa-refresh" aria-hidden="true"></i> Sync</a>
     {% load staticfiles %}
     <img id="loading-img" width="33" src="{% static 'manati_ui/images/ajax-loader.gif' %}"/>
 
         </div>
-        <div class="col-md-2 ">
+        <div class="col-md-3">
             {% if user.is_authenticated %}
+                <a href="#" class="btn btn-primary"><i class="fa fa-share-alt" aria-hidden="true"></i> Share</a>
+
                 <input type="checkbox"  {{ analysissession.public|yesno:"checked,''" }} data-toggle="toggle"
                    data-on="<i class='fa fa-share-alt'></i> is Public"
                    data-off="<i class='fa fa-ban'></i> No Public"

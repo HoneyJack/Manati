@@ -1,0 +1,6 @@
+docker run --rm  -p 443:443 -p 80:80 --name letsencrypt -v "`pwd`/tmp/etc/letsencrypt:/etc/letsencrypt" -v "`pwd`/tmp/var/lib/letsencrypt:/var/lib/letsencrypt" certbot/certbot certonly -n -m "raulbeni@gmail.com" -d app.manatiproject.com --standalone --agree-tos
+
+
+docker stack deploy --compose-file production.yml manati
+
+docker stack rm manati

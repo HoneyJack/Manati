@@ -640,6 +640,14 @@ class EditAnalysisSession(generic.DetailView):
     model = AnalysisSession
     template_name = 'manati_ui/analysis_session/edit.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        entity = get_object_or_404(AnalysisSession, pk=kwargs['pk'])
+        user = request.user
+        if entity.public or user.username == "admin" or entity.users.filter(id__in=[user.id]).exists():
+            return super(EditAnalysisSession, self).dispatch(request, *args, **kwargs)
+        else:
+            raise Http404
+
     def get_context_data(self, **kwargs):
         context = super(EditAnalysisSession, self).get_context_data(**kwargs)
         object = super(EditAnalysisSession, self).get_object()

@@ -166,6 +166,8 @@ class AnalysisSessionManager(models.Manager):
 
     @transaction.atomic
     def sync_weblogs(self, analysis_session_id,data, user):
+        if not data:
+            return []
         try:
             print("Weblogs to update: ")
             print(len(data))
